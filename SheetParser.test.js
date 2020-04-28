@@ -1,41 +1,17 @@
-const SheetParser = require("./SheetParser");
+const { parse } = require("./SheetParser");
 
 test("it throws an error when the input is malformed", () => {
-  let parser = new SheetParser();
-
   const input = [
     ["Carrier", "Not a state", "Something else"],
     ["Allstate", "Both", "Both"],
   ];
 
   expect(() => {
-    parser.parse(input, { type: "PL" });
+    parse(input, { type: "PL" });
   }).toThrowError(/incorrect sheet format/i);
 });
 
-test("it uses parseWithStates when states are passed in", () => {
-  let parser = new SheetParser();
-  parser.parseWithStates = jest.fn();
-  parser.parseByType = jest.fn();
-
-  parser.parse("some input", { states: ["IL"] });
-  expect(parser.parseWithStates).toBeCalled();
-  expect(parser.parseByType).not.toBeCalled();
-});
-
-test("it uses parseByType when type is passed in", () => {
-  let parser = new SheetParser();
-  parser.parseWithStates = jest.fn();
-  parser.parseByType = jest.fn();
-
-  parser.parse("some input", { type: "PL" });
-  expect(parser.parseWithStates).not.toBeCalled();
-  expect(parser.parseByType).toBeCalled();
-});
-
 test("it correctly parses Tab 1 (PL- IL/IN/MI) rows into coverage objects", () => {
-  let parser = new SheetParser();
-
   const input = [
     ["Carrier", "IL", "IN", "MI"],
     ["Allstate", "Both", "Both"],
@@ -48,12 +24,10 @@ test("it correctly parses Tab 1 (PL- IL/IN/MI) rows into coverage objects", () =
     { carrier: "Allstate", state: "IN", coverage: "AUTO" },
   ];
 
-  expect(parser.parse(input, { type: "PL" })).toEqual(expected);
+  expect(parse(input, { type: "PL" })).toEqual(expected);
 });
 
 test("it correctly parses Tab 2 (PL - FL) sheet into coverage objects", () => {
-  let parser = new SheetParser();
-
   const input = [
     ["Carrier", "FL"],
     ["American Integrity", "FIRE"],
@@ -63,12 +37,10 @@ test("it correctly parses Tab 2 (PL - FL) sheet into coverage objects", () => {
     { carrier: "American Integrity", state: "FL", coverage: "FIRE" },
   ];
 
-  expect(parser.parse(input, { type: "PL" })).toEqual(expected);
+  expect(parse(input, { type: "PL" })).toEqual(expected);
 });
 
 test("it correctly parses Tab 3 (Flood) rows into coverage objects", () => {
-  let parser = new SheetParser();
-
   const input = [
     ["Carrier", "IL", "IN", "MI", "FL"],
     ["CatCoverage", "Yes", "Yes", "Yes", "Yes"],
@@ -81,12 +53,10 @@ test("it correctly parses Tab 3 (Flood) rows into coverage objects", () => {
     { carrier: "CatCoverage", state: "FL", coverage: "FLOOD" },
   ];
 
-  expect(parser.parse(input, { type: "FLOOD" })).toEqual(expected);
+  expect(parse(input, { type: "FLOOD" })).toEqual(expected);
 });
 
 test("it correctly parses Tab 4 (PL - Other States) rows into coverage objects", () => {
-  let parser = new SheetParser();
-
   const input = [
     [
       "Carrier",
@@ -140,12 +110,10 @@ test("it correctly parses Tab 4 (PL - Other States) rows into coverage objects",
     { carrier: "Chubb", state: "SC", coverage: "AUTO" },
   ];
 
-  expect(parser.parse(input, { type: "PL" })).toEqual(expected);
+  expect(parse(input, { type: "PL" })).toEqual(expected);
 });
 
 test("it correctly parses Tab 5 (CL STATES APTS) rows into coverage objects", () => {
-  let parser = new SheetParser();
-
   const input = [
     [
       "Carrier",
@@ -212,14 +180,12 @@ test("it correctly parses Tab 5 (CL STATES APTS) rows into coverage objects", ()
     { carrier: "CIBA", state: "AZ", coverage: "APARTMENT" },
   ];
 
-  expect(parser.parse(input, { type: "APARTMENT" })).toEqual(
+  expect(parse(input, { type: "APARTMENT" })).toEqual(
     expect.arrayContaining(expected)
   );
 });
 
 test("it correctly parses Tab 6 (CL - IL/IN/MI/OH) rows into coverage objects", () => {
-  const parser = new SheetParser();
-
   const input = [
     ["Carrier", "SFR's (1-4 Units)", "4+ units"],
     ["Arcana", "Yes"],
@@ -267,7 +233,7 @@ test("it correctly parses Tab 6 (CL - IL/IN/MI/OH) rows into coverage objects", 
 
   const states = ["IL", "IN", "MI", "OH"];
 
-  const actual = parser.parse(input, { states });
+  const actual = parse(input, { states });
 
   // run each test case individually so that we can see which one failed more easily.
   for (let e of expected) {
@@ -278,8 +244,6 @@ test("it correctly parses Tab 6 (CL - IL/IN/MI/OH) rows into coverage objects", 
 });
 
 test("it correctly parses Tab 7 (CL - FL) rows into coverage objects", () => {
-  const parser = new SheetParser();
-
   const input = [
     ["Carrier", "SFR's (1-4 Units)", "4+ units"],
     ["Arcana", "Yes"],
@@ -289,7 +253,7 @@ test("it correctly parses Tab 7 (CL - FL) rows into coverage objects", () => {
   const notExpected = [{ carrier: "Swyfft", state: "FL", coverage: "SFR" }];
 
   const states = ["FL"];
-  const actual = parser.parse(input, { states });
+  const actual = parse(input, { states });
 
   // run each test case individually so that we can see which one failed more easily.
   for (let e of expected) {
@@ -302,8 +266,6 @@ test("it correctly parses Tab 7 (CL - FL) rows into coverage objects", () => {
 });
 
 test("it correctly parses Tab 8 (CL - TX) rows into coverage objects", () => {
-  const parser = new SheetParser();
-
   const input = [
     ["Carrier", "SFR's (1-4 Units)", "4+ units"],
     ["Arcana", "Yes"],
@@ -313,7 +275,7 @@ test("it correctly parses Tab 8 (CL - TX) rows into coverage objects", () => {
   const notExpected = [{ carrier: "Swyfft", state: "TX", coverage: "SFR" }];
 
   const states = ["TX"];
-  const actual = parser.parse(input, { states });
+  const actual = parse(input, { states });
 
   // run each test case individually so that we can see which one failed more easily.
   for (let e of expected) {
@@ -326,8 +288,6 @@ test("it correctly parses Tab 8 (CL - TX) rows into coverage objects", () => {
 });
 
 test("it correctly parses Tab 9 (CL - OK) rows into coverage objects", () => {
-  const parser = new SheetParser();
-
   const input = [
     ["Carrier", "SFR's (1-4 Units)", "4+ units"],
     ["Nationwide", "", "Yes"],
@@ -339,7 +299,7 @@ test("it correctly parses Tab 9 (CL - OK) rows into coverage objects", () => {
   const notExpected = [{ carrier: "Nationwide", state: "OK", coverage: "SFR" }];
 
   const states = ["OK"];
-  const actual = parser.parse(input, { states });
+  const actual = parse(input, { states });
 
   // run each test case individually so that we can see which one failed more easily.
   for (let e of expected) {
@@ -352,8 +312,6 @@ test("it correctly parses Tab 9 (CL - OK) rows into coverage objects", () => {
 });
 
 test("it correctly parses Tab 10 (CL - TN) rows into coverage objects", () => {
-  const parser = new SheetParser();
-
   const input = [
     ["Carrier", "SFR's (1-4 Units)", "4+ units"],
     ["Guard", "", "Yes - CL's"],
@@ -365,7 +323,7 @@ test("it correctly parses Tab 10 (CL - TN) rows into coverage objects", () => {
   const notExpected = [{ carrier: "Swyfft", state: "TN", coverage: "SFR" }];
 
   const states = ["TN"];
-  const actual = parser.parse(input, { states });
+  const actual = parse(input, { states });
 
   // run each test case individually so that we can see which one failed more easily.
   for (let e of expected) {

@@ -1,3 +1,6 @@
+// function to handle search requests.
+// Normally I would add tests for something like this,
+// but its a relatively simple function so I skipped them.
 const handle = (body, carriers) => {
   try {
     const { state, coverage } = body;

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const readline = require("readline");
 const { google } = require("googleapis");
-const SheetParser = require("./SheetParser");
+const { parse } = require("./SheetParser");
 const { spreadsheetId, scopes, tabs } = require("./config.json");
 
 // This code is adapted from the Google Sheets Quickstart guide
@@ -83,8 +83,7 @@ class SheetsHandler {
   };
 
   importData = async () => {
-    const parser = new SheetParser();
-    const carrierPreferences = [];
+    let carrierPreferences = [];
 
     const rawData = await this.batchGetCarrierPreferences();
     for (let key in rawData) {
@@ -92,24 +91,26 @@ class SheetsHandler {
       const tab = tabs.filter((t) => t.sheet_name === name)[0];
 
       if (tab && tab.hasOwnProperty("states")) {
-        carrierPreferences.push(
-          parser.parse(rawData[key], { states: tab.states })
-        );
+        carrierPreferences.push(parse(rawData[key], { states: tab.states }));
       }
 
       if (tab && tab.hasOwnProperty("type")) {
-        carrierPreferences.push(parser.parse(rawData[key], { type: tab.type }));
+        carrierPreferences.push(parse(rawData[key], { type: tab.type }));
       }
     }
-    console.log("Done importing data!");
 
-    return carrierPreferences.flat();
+    carrierPreferences = carrierPreferences.flat();
+    console.log(
+      `Done importing data! Got ${carrierPreferences.length} records.`
+    );
+
+    return carrierPreferences;
   };
 
   batchGetCarrierPreferences = async () => {
     return new Promise((resolve, reject) => {
       const sheets = google.sheets({ version: "v4", auth: this.auth });
-      // add range to sheet name if one is given
+      // add cell range to sheet name if one is given
       const ranges = tabs.map((t) => {
         return Boolean(t.range) ? t.sheet_name + "!" + t.range : t.sheet_name;
       });
@@ -120,7 +121,7 @@ class SheetsHandler {
         (err, res) => {
           if (err) {
             console.log(
-              "Token is probably expired. Run `rm token.json` and restart the app!"
+              "Token is probably expired. Run `rm token.json` and restart the app!\n"
             );
             reject(`Google Sheets API returned an error: ${err}`);
           }
