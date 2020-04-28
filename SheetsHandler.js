@@ -1,9 +1,10 @@
 const fs = require("fs");
 const readline = require("readline");
 const { google } = require("googleapis");
-const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
+const SheetParser = require("./SheetParser");
+const { spreadsheetId, scopes, tabs } = require("./config.json");
 
-// This code is adapted from the Google Sheets Quickstart guide found here:
+// This code is adapted from the Google Sheets Quickstart guide
 // https://developers.google.com/sheets/api/quickstart/nodejs
 
 // The file token.json stores the user's access and refresh tokens, and is
@@ -40,7 +41,7 @@ async function authorize(credentials, instance) {
 function getNewToken(oAuth2Client, instance) {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: SCOPES,
+    scope: scopes,
   });
   console.log("Authorize this app by visiting this url:", authUrl);
   const rl = readline.createInterface({
@@ -67,40 +68,77 @@ function getNewToken(oAuth2Client, instance) {
   });
 }
 
+const extractSheetName = (str) => {
+  return str.split("!")[0].replace(/'/g, "");
+};
+
+// class to handle interactions with the Google Sheet
 class SheetsHandler {
   init = async () => {
     // authenticate
+    console.log("Loading...");
     const credentials = fs.readFileSync("credentials.json");
     const auth = await authorize(JSON.parse(credentials), this);
     this.auth = auth;
-
-    // Create in-memory data structure to hold carrier data
   };
 
-  importData = () => {
-    const ranges = ["PL - IL/IN/MI!A:D"];
+  importData = async () => {
+    const parser = new SheetParser();
+    const carrierPreferences = [];
 
-    const coverages = [];
+    const rawData = await this.batchGetCarrierPreferences();
+    for (let key in rawData) {
+      const name = extractSheetName(key);
+      const tab = tabs.filter((t) => t.sheet_name === name)[0];
 
-    for (let range of ranges) {
+      if (tab && tab.hasOwnProperty("states")) {
+        carrierPreferences.push(
+          parser.parse(rawData[key], { states: tab.states })
+        );
+      }
+
+      if (tab && tab.hasOwnProperty("type")) {
+        carrierPreferences.push(parser.parse(rawData[key], { type: tab.type }));
+      }
     }
+    console.log("Done importing data!");
+
+    return carrierPreferences.flat();
   };
 
-  carriers = async () => {
-    return new Promise((resolve) => {
+  batchGetCarrierPreferences = async () => {
+    return new Promise((resolve, reject) => {
       const sheets = google.sheets({ version: "v4", auth: this.auth });
-      sheets.spreadsheets.values.get(
-        {
-          spreadsheetId: "1XGBd2qUVjz7OwmbYDQNbrmyf4NuLYaVWwswS4zx6_iw",
-          range: "PL - IL/IN/MI!A:D",
-        },
+      // add range to sheet name if one is given
+      const ranges = tabs.map((t) => {
+        return Boolean(t.range) ? t.sheet_name + "!" + t.range : t.sheet_name;
+      });
+
+      // get data from Carrier Preferences Sheet
+      sheets.spreadsheets.values.batchGet(
+        { ranges, spreadsheetId },
         (err, res) => {
-          if (err) return console.log("The API returned an error: " + err);
-          const rows = res.data.values;
-          if (rows.length) {
-            resolve(rows);
-          } else {
-            console.log("No data found.");
+          if (err) {
+            console.log(
+              "Token is probably expired. Run `rm token.json` and restart the app!"
+            );
+            reject(`Google Sheets API returned an error: ${err}`);
+          }
+
+          const results = {};
+
+          try {
+            const ranges = res.data.valueRanges;
+
+            for (let range of ranges) {
+              const name = range.range;
+              const { values } = range;
+              results[name] = values;
+            }
+
+            resolve(results);
+          } catch (err) {
+            reject(err);
           }
         }
       );

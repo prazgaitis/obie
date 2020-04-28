@@ -1,0 +1,61 @@
+{
+  "spreadsheetId": "1XGBd2qUVjz7OwmbYDQNbrmyf4NuLYaVWwswS4zx6_iw",
+  "scopes": ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  "tabs": [
+    {
+      "sheet_name": "PL - IL/IN/MI",
+      "range": "",
+      "type": "PL"
+    },
+    {
+      "sheet_name": "PL - Other States",
+      "range": "",
+      "type": "PL"
+    },
+    {
+      "sheet_name": "PL - FL",
+      "range": "",
+      "type": "PL"
+    },
+    {
+      "sheet_name": "Flood",
+      "range": "A3:E10",
+      "type": "FLOOD"
+    },
+    {
+      "sheet_name": "Flood",
+      "range": "A15:E20",
+      "type": "FLOOD"
+    },
+    {
+      "sheet_name": "CL STATES APTS",
+      "range": "",
+      "type": "APARTMENT"
+    },
+    {
+      "sheet_name": "CL - IL/IN/MI/OH",
+      "range": "",
+      "states": ["IL", "IN", "MI", "OH"]
+    },
+    {
+      "sheet_name": "CL - FL",
+      "range": "",
+      "states": ["FL"]
+    },
+    {
+      "sheet_name": "CL - TX",
+      "range": "",
+      "states": ["TX"]
+    },
+    {
+      "sheet_name": "CL - OK",
+      "range": "",
+      "states": ["OK"]
+    },
+    {
+      "sheet_name": "CL - TN",
+      "range": "",
+      "states": ["TN"]
+    }
+  ]
+}
