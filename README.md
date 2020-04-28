@@ -66,3 +66,10 @@ Let's say that we want to add a new tab to the sheet. All we need to do is add a
 
 - Run app: `npm i && node app.js`
 - Run tests: `npm run test`
+- Manually test:
+
+````bash
+curl -X POST 'localhost:3000/search' \
+--header 'Content-Type: application/json' \
+--data-raw '{"state": "IL", "coverage": "FIRE"}'```
+````

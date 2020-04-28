@@ -27,6 +27,7 @@ app.get("/carriers", (req, res) => {
   }
 });
 
+// Main search handler
 app.post("/search", (req, res) => {
   const { carriers, error } = handle(req.body, allCarriers);
 
